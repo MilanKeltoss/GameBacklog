@@ -20,7 +20,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Create">
+        <form asp-action="Create" id="createGameForm">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="Title" class="control-label"></label>
@@ -126,10 +126,11 @@
         }
 
         function selectGame(game) {
-            document.querySelector('input[name="Title"]').value = game.name;
-            if (game.genre) {
-                document.querySelector('input[name="Genre"]').value = game.genre;
-            }
+                    const form = document.getElementById('createGameForm');
+        form.querySelector('input[name="Title"]').value = game.name;
+        if (game.genre) {
+            form.querySelector('input[name="Genre"]').value = game.genre;
+        }
 
             // Hidden inputs for RawgId and CoverImageUrl
             setHiddenInput('RawgId', game.rawgId);
@@ -139,13 +140,14 @@
             searchInput.value = '';
         }
 
-        function setHiddenInput(name, value) {
-            let input = document.querySelector(`input[name="${name}"]`);
+                       function setHiddenInput(name, value) {
+            const form = document.getElementById('createGameForm');
+            let input = form.querySelector(`input[name="${name}"]`);
             if (!input) {
                 input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = name;
-                document.querySelector('form').appendChild(input);
+                form.appendChild(input);
             }
             input.value = value;
         }
