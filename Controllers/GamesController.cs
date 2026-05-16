@@ -1,12 +1,14 @@
+using GameBacklog.Data;
+using GameBacklog.Models;
+using GameBacklog.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using GameBacklog.Data;
-using GameBacklog.Models;
+using GameBacklog.ViewModels;
 
 namespace GameBacklog.Controllers
 {
@@ -169,6 +171,47 @@ namespace GameBacklog.Controllers
         private bool GameExists(int id)
         {
             return _context.Games.Any(e => e.Id == id);
+        }
+    
+    // GET: Games/Stats
+public async Task<IActionResult> Stats()
+        {
+            var games = await _context.Games.ToListAsync();
+
+            var stats = new StatsViewModel
+            {
+                TotalGames = games.Count,
+                WantToPlayCount = games.Count(g => g.Status == GameStatus.WantToPlay),
+                PlayingCount = games.Count(g => g.Status == GameStatus.Playing),
+                CompletedCount = games.Count(g => g.Status == GameStatus.Completed),
+                DroppedCount = games.Count(g => g.Status == GameStatus.Dropped),
+                AverageRating = games.Where(g => g.Rating.HasValue)
+                                     .Select(g => (double)g.Rating!.Value)
+                                     .DefaultIfEmpty()
+                                     .Average(),
+                TopGenre = games.Where(g => !string.IsNullOrEmpty(g.Genre))
+                                .GroupBy(g => g.Genre!)
+                                .OrderByDescending(g => g.Count())
+                                .Select(g => g.Key)
+                                .FirstOrDefault(),
+                TopPlatform = games.GroupBy(g => g.Platform)
+                                   .OrderByDescending(g => g.Count())
+                                   .Select(g => g.Key)
+                                   .FirstOrDefault(),
+                GamesByPlatform = games.GroupBy(g => g.Platform)
+                                       .ToDictionary(g => g.Key, g => g.Count()),
+                GamesByGenre = games.Where(g => !string.IsNullOrEmpty(g.Genre))
+                                    .GroupBy(g => g.Genre!)
+                                    .ToDictionary(g => g.Key, g => g.Count())
+            };
+
+            // Ak nie sú žiadne hry s hodnotením, AverageRating je 0
+            if (!games.Any(g => g.Rating.HasValue))
+            {
+                stats.AverageRating = null;
+            }
+
+            return View(stats);
         }
     }
 }

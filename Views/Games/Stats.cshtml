@@ -1,0 +1,95 @@
+﻿@model GameBacklog.ViewModels.StatsViewModel
+
+@{
+    ViewData["Title"] = "Statistics";
+}
+
+<h1>Statistics</h1>
+
+<div class="row mt-4">
+    <div class="col-md-3 mb-3">
+        <div class="card text-bg-light">
+            <div class="card-body text-center">
+                <h6 class="text-muted">Total games</h6>
+                <h2>@Model.TotalGames</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-bg-primary">
+            <div class="card-body text-center">
+                <h6>Playing</h6>
+                <h2>@Model.PlayingCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-bg-success">
+            <div class="card-body text-center">
+                <h6>Completed</h6>
+                <h2>@Model.CompletedCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-bg-secondary">
+            <div class="card-body text-center">
+                <h6>Want to Play</h6>
+                <h2>@Model.WantToPlayCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Average rating</h6>
+                <h3>@(Model.AverageRating.HasValue ? Model.AverageRating.Value.ToString("F1") + " / 10" : "—")</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Top genre</h6>
+                <h3>@(Model.TopGenre ?? "—")</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Top platform</h6>
+                <h3>@(Model.TopPlatform ?? "—")</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.GamesByPlatform.Any())
+{
+    <h3 class="mt-4">Games by platform</h3>
+    <table class="table table-sm w-50">
+        <thead>
+            <tr>
+                <th>Platform</th>
+                <th class="text-end">Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.GamesByPlatform.OrderByDescending(g => g.Value))
+            {
+                <tr>
+                    <td>@item.Key</td>
+                    <td class="text-end">@item.Value</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<p class="mt-4">
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to list</a>
+</p>
