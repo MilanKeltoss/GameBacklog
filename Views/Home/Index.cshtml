@@ -1,8 +1,38 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="text-center py-5">
+    <h1 class="display-3 mb-3" style="background: linear-gradient(135deg, #6c5ce7, #00d9a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+        GameBacklog
+    </h1>
+    <p class="lead text-muted mb-4">Track your gaming library — what you want to play, what you're playing, and what you've finished.</p>
+    <div class="mt-4">
+        <a asp-controller="Games" asp-action="Index" class="btn btn-primary btn-lg px-4 me-2">View My Games</a>
+        <a asp-controller="Games" asp-action="Create" class="btn btn-outline-primary btn-lg px-4">Add a Game</a>
+    </div>
+</div>
+
+<div class="row mt-5 g-4">
+    <div class="col-md-4">
+        <div class="card h-100 p-4 text-center">
+            <div class="display-4 mb-2">📚</div>
+            <h4>Track</h4>
+            <p class="text-muted mb-0">Keep all your games in one place with their status, platform, and your personal rating.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 p-4 text-center">
+            <div class="display-4 mb-2">🔍</div>
+            <h4>Search & Discover</h4>
+            <p class="text-muted mb-0">Find games via the RAWG database with auto-fill, cover images, and metadata.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 p-4 text-center">
+            <div class="display-4 mb-2">📊</div>
+            <h4>Statistics</h4>
+            <p class="text-muted mb-0">See your gaming stats — completion rate, top genres, average ratings.</p>
+        </div>
+    </div>
 </div>
