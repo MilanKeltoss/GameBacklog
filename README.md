@@ -10,6 +10,8 @@ A personal game library manager built with ASP.NET Core MVC. Track games you wan
 - Search games by title (case-insensitive)
 - Filter games by status
 - Color-coded status badges for quick visual scanning
+- User authentication via ASP.NET Core Identity (register, login, logout)
+- Each user has their own private game collection
 
 ## Tech Stack
 
@@ -38,9 +40,6 @@ Then open `https://localhost:xxxx/Games` in your browser.
 ## Project Status
 
 Work in progress. Planned features:
-- User authentication via ASP.NET Core Identity
-- Integration with RAWG API for automatic game metadata
-- Statistics dashboard
 - Deployment to Azure App Service
 
 ## Screenshots

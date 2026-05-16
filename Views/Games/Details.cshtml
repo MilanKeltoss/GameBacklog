@@ -1,60 +1,99 @@
 @model GameBacklog.Models.Game
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = Model.Title;
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>Game</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Platform)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Platform)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Genre)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Genre)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Rating)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Rating)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateAdded)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateAdded)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Notes)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Notes)
-        </dd>
-    </dl>
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Back to list</a>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+<div class="card shadow-sm">
+    <div class="row g-0">
+        <div class="col-md-4">
+            @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+            {
+                <img src="@Model.CoverImageUrl" alt="@Model.Title cover"
+                     class="img-fluid rounded-start w-100"
+                     style="object-fit: cover; height: 100%; min-height: 300px;" />
+            }
+            else
+            {
+                <div class="bg-light d-flex align-items-center justify-content-center rounded-start"
+                     style="height: 100%; min-height: 300px;">
+                    <span class="text-muted">No cover image</span>
+                </div>
+            }
+        </div>
+        <div class="col-md-8">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h1 class="card-title mb-0">@Model.Title</h1>
+                    @{
+                        var badgeClass = Model.Status switch
+                        {
+                            GameBacklog.Models.GameStatus.WantToPlay => "bg-secondary",
+                            GameBacklog.Models.GameStatus.Playing => "bg-primary",
+                            GameBacklog.Models.GameStatus.Completed => "bg-success",
+                            GameBacklog.Models.GameStatus.Dropped => "bg-danger",
+                            _ => "bg-light"
+                        };
+                    }
+                    <span class="badge @badgeClass fs-6">@Html.DisplayFor(model => model.Status)</span>
+                </div>
+
+                <dl class="row mb-4">
+                    <dt class="col-sm-4 text-muted">Platform</dt>
+                    <dd class="col-sm-8">@Model.Platform</dd>
+
+                    <dt class="col-sm-4 text-muted">Genre</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Genre) ? "—" : Model.Genre)</dd>
+
+                    <dt class="col-sm-4 text-muted">Rating</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Rating.HasValue)
+                        {
+                            <strong>@Model.Rating / 10</strong>
+                            <div class="d-inline-block ms-2">
+                                @for (int i = 1; i <= 10; i++)
+                                {
+                                    <span style="color: @(i <= Model.Rating ? "#ffc107" : "#dee2e6"); font-size: 1.1rem;">★</span>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not rated</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Date Added</dt>
+                    <dd class="col-sm-8">@Model.DateAdded.ToString("dd MMMM yyyy")</dd>
+
+                    @if (Model.RawgId.HasValue)
+                    {
+                        <dt class="col-sm-4 text-muted">RAWG ID</dt>
+                        <dd class="col-sm-8">
+                            <a href="https://rawg.io/games/@Model.RawgId" target="_blank" rel="noopener" class="text-decoration-none">
+                                @Model.RawgId <small>↗</small>
+                            </a>
+                        </dd>
+                    }
+                </dl>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                {
+                    <hr />
+                    <h5 class="text-muted">Notes</h5>
+                    <p class="mb-3" style="white-space: pre-wrap;">@Model.Notes</p>
+                }
+
+                <hr />
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
