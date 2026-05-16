@@ -1,10 +1,16 @@
 @model IEnumerable<GameBacklog.Models.Game>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "My Games";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Games</h1>
+    <div>
+        <a asp-action="Create" class="btn btn-primary">+ Add Game</a>
+        <a asp-action="Stats" class="btn btn-outline-info">Statistics</a>
+    </div>
+</div>
 
 <form asp-action="Index" method="get" class="mb-4">
     <div class="row g-2">
@@ -33,77 +39,65 @@
     </div>
 </form>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-    <a asp-action="Stats" class="btn btn-outline-info">Statistics</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Platform)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Genre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Rating)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateAdded)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Notes)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Platform)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Genre)
-            </td>
-                <td>
-                    @{
-                        var badgeClass = item.Status switch
-                        {
-                            GameBacklog.Models.GameStatus.WantToPlay => "bg-secondary",
-                            GameBacklog.Models.GameStatus.Playing => "bg-primary",
-                            GameBacklog.Models.GameStatus.Completed => "bg-success",
-                            GameBacklog.Models.GameStatus.Dropped => "bg-danger",
-                            _ => "bg-light"
-                        };
-                    }
-                    <span class="badge @badgeClass">@Html.DisplayFor(modelItem => item.Status)</span>
-                </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Rating)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateAdded)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Notes)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+@if (!Model.Any())
+{
+    <div class="alert alert-light text-center py-5 border">
+        <h4 class="text-muted">No games found</h4>
+        <p class="text-muted mb-3">Your library is empty, or no games match your filters.</p>
+        <a asp-action="Create" class="btn btn-primary">Add Your First Game</a>
+    </div>
 }
-    </tbody>
-</table>
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>@Html.DisplayNameFor(model => model.Title)</th>
+                <th>@Html.DisplayNameFor(model => model.Platform)</th>
+                <th>@Html.DisplayNameFor(model => model.Genre)</th>
+                <th>@Html.DisplayNameFor(model => model.Status)</th>
+                <th class="text-center">@Html.DisplayNameFor(model => model.Rating)</th>
+                <th>@Html.DisplayNameFor(model => model.DateAdded)</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <strong>@Html.DisplayFor(modelItem => item.Title)</strong>
+                    </td>
+                    <td>@Html.DisplayFor(modelItem => item.Platform)</td>
+                    <td>
+                        @(string.IsNullOrEmpty(item.Genre) ? "—" : item.Genre)
+                    </td>
+                    <td>
+                        @{
+                            var badgeClass = item.Status switch
+                            {
+                                GameBacklog.Models.GameStatus.WantToPlay => "bg-secondary",
+                                GameBacklog.Models.GameStatus.Playing => "bg-primary",
+                                GameBacklog.Models.GameStatus.Completed => "bg-success",
+                                GameBacklog.Models.GameStatus.Dropped => "bg-danger",
+                                _ => "bg-light"
+                            };
+                        }
+                        <span class="badge @badgeClass">@Html.DisplayFor(modelItem => item.Status)</span>
+                    </td>
+                    <td class="text-center">
+                        @(item.Rating.HasValue ? $"{item.Rating} / 10" : "—")
+                    </td>
+                    <td>
+                        @item.DateAdded.ToString("dd MMM yyyy")
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Details</a>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
