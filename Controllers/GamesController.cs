@@ -1,5 +1,7 @@
 using GameBacklog.Data;
 using GameBacklog.Models;
+using GameBacklog.Services;
+using GameBacklog.ViewModels;
 using GameBacklog.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,17 +10,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using GameBacklog.ViewModels;
+
 
 namespace GameBacklog.Controllers
 {
     public class GamesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IRawgService _rawgService;
 
-        public GamesController(ApplicationDbContext context)
+        public GamesController(ApplicationDbContext context, IRawgService rawgService)
         {
             _context = context;
+            _rawgService = rawgService;
         }
 
         // GET: Games
@@ -73,7 +77,7 @@ namespace GameBacklog.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes")] Game game)
+        public async Task<IActionResult> Create([Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes,CoverImageUrl,RawgId")] Game game)
         {
             if (ModelState.IsValid)
             {
@@ -105,7 +109,7 @@ namespace GameBacklog.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes")] Game game)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes,RawgId")] Game game)
         {
             if (id != game.Id)
             {
@@ -172,9 +176,9 @@ namespace GameBacklog.Controllers
         {
             return _context.Games.Any(e => e.Id == id);
         }
-    
-    // GET: Games/Stats
-public async Task<IActionResult> Stats()
+
+        // GET: Games/Stats
+        public async Task<IActionResult> Stats()
         {
             var games = await _context.Games.ToListAsync();
 
@@ -213,5 +217,28 @@ public async Task<IActionResult> Stats()
 
             return View(stats);
         }
+        // GET: Games/SearchRawg?query=witcher
+        [HttpGet]
+        public async Task<IActionResult> SearchRawg(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+            {
+                return Json(new List<object>());
+            }
+
+            var results = await _rawgService.SearchGamesAsync(query);
+
+            var simplified = results.Select(g => new
+            {
+                rawgId = g.Id,
+                name = g.Name,
+                released = g.Released,
+                coverImage = g.BackgroundImage,
+                genre = g.Genres.FirstOrDefault()?.Name
+            });
+
+            return Json(simplified);
+        }
     }
 }
+

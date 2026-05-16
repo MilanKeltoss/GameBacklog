@@ -5,6 +5,16 @@
 }
 
 <h1>Create</h1>
+<div class="card mb-4 border-info">
+    <div class="card-body">
+        <label for="rawgSearch" class="form-label">
+            <strong>🔍 Search RAWG database</strong>
+            <small class="text-muted">– find a game and auto-fill the form</small>
+        </label>
+        <input type="text" id="rawgSearch" class="form-control" placeholder="Type game name..." autocomplete="off" />
+        <div id="rawgResults" class="list-group mt-2"></div>
+    </div>
+</div>
 
 <h4>Game</h4>
 <hr />
@@ -61,5 +71,83 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        const searchInput = document.getElementById('rawgSearch');
+        const resultsDiv = document.getElementById('rawgResults');
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => searchRawg(query), 400);
+        });
+
+        async function searchRawg(query) {
+            resultsDiv.innerHTML = '<div class="text-muted p-2">Searching...</div>';
+
+            try {
+                const response = await fetch(`/Games/SearchRawg?query=${encodeURIComponent(query)}`);
+                const games = await response.json();
+
+                if (games.length === 0) {
+                    resultsDiv.innerHTML = '<div class="text-muted p-2">No games found.</div>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = games.map(g => `
+                    <button type="button" class="list-group-item list-group-item-action d-flex align-items-center"
+                            onclick='selectGame(${JSON.stringify(g)})'>
+                        ${g.coverImage
+                            ? `<img src="${g.coverImage}" style="width:60px; height:40px; object-fit:cover;" class="me-3 rounded" />`
+                            : `<div style="width:60px; height:40px;" class="me-3 bg-secondary rounded"></div>`}
+                        <div class="text-start">
+                            <strong>${g.name}</strong>
+                            <small class="text-muted d-block">
+                                ${g.released ? new Date(g.released).getFullYear() : '?'}
+                                ${g.genre ? '· ' + g.genre : ''}
+                            </small>
+                        </div>
+                    </button>
+                `).join('');
+            } catch (err) {
+                resultsDiv.innerHTML = '<div class="text-danger p-2">Search failed. Try again.</div>';
+                console.error(err);
+            }
+        }
+
+        function selectGame(game) {
+            document.querySelector('input[name="Title"]').value = game.name;
+            if (game.genre) {
+                document.querySelector('input[name="Genre"]').value = game.genre;
+            }
+
+            // Hidden inputs for RawgId and CoverImageUrl
+            setHiddenInput('RawgId', game.rawgId);
+            setHiddenInput('CoverImageUrl', game.coverImage || '');
+
+            resultsDiv.innerHTML = `<div class="alert alert-success py-2 mb-0">✓ Selected: <strong>${game.name}</strong></div>`;
+            searchInput.value = '';
+        }
+
+        function setHiddenInput(name, value) {
+            let input = document.querySelector(`input[name="${name}"]`);
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                document.querySelector('form').appendChild(input);
+            }
+            input.value = value;
+        }
+    </script>
 }

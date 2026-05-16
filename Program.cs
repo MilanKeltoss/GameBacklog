@@ -1,9 +1,15 @@
 using GameBacklog.Data;
+using GameBacklog.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpClient<IRawgService, RawgService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.rawg.io/api/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

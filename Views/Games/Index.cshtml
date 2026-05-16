@@ -52,6 +52,7 @@ else
     <table class="table table-hover align-middle">
         <thead>
             <tr>
+                <th></th>
                 <th>@Html.DisplayNameFor(model => model.Title)</th>
                 <th>@Html.DisplayNameFor(model => model.Platform)</th>
                 <th>@Html.DisplayNameFor(model => model.Genre)</th>
@@ -65,6 +66,18 @@ else
             @foreach (var item in Model)
             {
                 <tr>
+                    <td style="width:80px;">
+                        @if (!string.IsNullOrEmpty(item.CoverImageUrl))
+                        {
+                            <img src="@item.CoverImageUrl" alt="@item.Title cover" style="width:70px; height:45px; object-fit:cover;" class="rounded" />
+                        }
+                        else
+                        {
+                            <div style="width:70px; height:45px;" class="bg-light rounded d-flex align-items-center justify-content-center">
+                                <small class="text-muted">No image</small>
+                            </div>
+                        }
+                    </td>
                     <td>
                         <strong>@Html.DisplayFor(modelItem => item.Title)</strong>
                     </td>

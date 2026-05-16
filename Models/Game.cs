@@ -29,6 +29,12 @@ public class Game
     [Display(Name = "Date Added")]
     public DateTime DateAdded { get; set; } = DateTime.Now;
 
+    [Display(Name = "Cover Image URL")]
+    public string? CoverImageUrl { get; set; }
+
+    [Display(Name = "RAWG ID")]
+    public int? RawgId { get; set; }
+
     [Display(Name = "Notes")]
     public string? Notes { get; set; }
 }
