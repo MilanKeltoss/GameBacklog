@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 
 namespace GameBacklog.Controllers
@@ -18,18 +20,21 @@ namespace GameBacklog.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IRawgService _rawgService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public GamesController(ApplicationDbContext context, IRawgService rawgService)
+        public GamesController(ApplicationDbContext context, IRawgService rawgService, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _rawgService = rawgService;
+            _userManager = userManager;
         }
 
         // GET: Games
         // GET: Games
         public async Task<IActionResult> Index(string? searchString, GameStatus? statusFilter)
         {
-            var games = _context.Games.AsQueryable();
+            var userId = _userManager.GetUserId(User);
+            var games = _context.Games.Where(g => g.UserId == userId);
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -55,7 +60,7 @@ namespace GameBacklog.Controllers
             {
                 return NotFound();
             }
-
+            var userId = _userManager.GetUserId(User);
             var game = await _context.Games
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (game == null)
@@ -79,6 +84,9 @@ namespace GameBacklog.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes,CoverImageUrl,RawgId")] Game game)
         {
+            game.UserId = _userManager.GetUserId(User)!;
+            ModelState.Remove(nameof(Game.UserId));  // odstránime z validácie, lebo sme ho práve nastavili
+
             if (ModelState.IsValid)
             {
                 _context.Add(game);
@@ -96,7 +104,10 @@ namespace GameBacklog.Controllers
                 return NotFound();
             }
 
-            var game = await _context.Games.FindAsync(id);
+            var userId = _userManager.GetUserId(User);
+            var game = await _context.Games
+                .FirstOrDefaultAsync(g => g.Id == id && g.UserId == userId);
+
             if (game == null)
             {
                 return NotFound();
@@ -109,12 +120,24 @@ namespace GameBacklog.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes,RawgId")] Game game)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes,CoverImageUrl,RawgId")] Game game)
         {
             if (id != game.Id)
             {
                 return NotFound();
             }
+
+            var userId = _userManager.GetUserId(User);
+            var existingGame = await _context.Games.AsNoTracking()
+                .FirstOrDefaultAsync(g => g.Id == id && g.UserId == userId);
+
+            if (existingGame == null)
+            {
+                return NotFound();  // neexistuje alebo nie je tvoja
+            }
+
+            game.UserId = userId!;  // zachováme správneho vlastníka
+            ModelState.Remove(nameof(Game.UserId));
 
             if (ModelState.IsValid)
             {
@@ -146,7 +169,7 @@ namespace GameBacklog.Controllers
             {
                 return NotFound();
             }
-
+            var userId = _userManager.GetUserId(User);
             var game = await _context.Games
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (game == null)
@@ -162,6 +185,7 @@ namespace GameBacklog.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var userId = _userManager.GetUserId(User);
             var game = await _context.Games.FindAsync(id);
             if (game != null)
             {
@@ -180,7 +204,8 @@ namespace GameBacklog.Controllers
         // GET: Games/Stats
         public async Task<IActionResult> Stats()
         {
-            var games = await _context.Games.ToListAsync();
+            var userId = _userManager.GetUserId(User);
+            var games = await _context.Games.Where(g => g.UserId == userId).ToListAsync();
 
             var stats = new StatsViewModel
             {

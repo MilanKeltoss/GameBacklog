@@ -37,6 +37,12 @@ public class Game
 
     [Display(Name = "Notes")]
     public string? Notes { get; set; }
+
+    // Foreign key to ApplicationUser
+    public string UserId { get; set; } = string.Empty;
+
+    // Navigation property
+    public ApplicationUser? User { get; set; }
 }
 
 public enum GameStatus

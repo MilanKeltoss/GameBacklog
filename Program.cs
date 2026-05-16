@@ -1,4 +1,5 @@
 using GameBacklog.Data;
+using GameBacklog.Models;
 using GameBacklog.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,19 @@ builder.Services.AddHttpClient<IRawgService, RawgService>(client =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;  // pre vývoj, v produkcii true
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+})
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddRazorPages();  // Identity UI používa Razor Pages
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -27,6 +41,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
@@ -36,5 +51,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+app.MapRazorPages();
 
 app.Run();
