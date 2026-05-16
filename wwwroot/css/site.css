@@ -173,13 +173,17 @@ a {
 /* Footer */
 .footer {
     background-color: var(--navbar-bg);
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.75);
     border-top: 1px solid var(--border-color);
     padding: 1rem 0;
 }
 
-    .footer a {
+.footer a {
         color: var(--accent-color);
+    }
+
+    .footer a:hover {
+        color: #00f0b5;
     }
 
 /* Status badges - custom colors that pop */
