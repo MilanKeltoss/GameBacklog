@@ -32,13 +32,13 @@ A multi-user game library manager built with ASP.NET Core MVC. Track games you w
 - A free RAWG API key from [rawg.io/apidocs](https://rawg.io/apidocs)
 
 ### Setup
-\`\`\`bash
+```bash
 git clone https://github.com/MilanKeltoss/GameBacklog.git
 cd GameBacklog
 dotnet user-secrets set "Rawg:ApiKey" "YOUR_RAWG_API_KEY"
 dotnet ef database update
 dotnet run
-\`\`\`
+```
 
 Then open `https://localhost:7234` in your browser, register an account, and start adding games.
 
@@ -69,6 +69,19 @@ Then open `https://localhost:7234` in your browser, register an account, and sta
 - **Per-user data isolation** via UserId foreign key with IDOR-safe controller actions
 - **Secrets management** via .NET user-secrets (no API keys in source control)
 
+## Security considerations
+
+This project applies several standard web security practices:
+
+- **CSRF protection** — `[ValidateAntiForgeryToken]` on all POST actions, automatic token generation via Razor tag helpers
+- **IDOR prevention** — every action that loads a game filters by `UserId`, never by `Id` alone, returning 404 (not 403) to avoid leaking resource existence
+- **Authorization** — `[Authorize]` attribute on `GamesController` with cookie-based authentication via ASP.NET Core Identity
+- **XSS-safe rendering** — RAWG search results built via DOM API (`createElement`, `textContent`) instead of `innerHTML` with template strings
+- **Over-posting protection** — `[Bind]` attribute on Create/Edit actions whitelists allowed properties; server-controlled fields (`UserId`, `DateAdded`) are set on the server and excluded from model binding
+- **Secrets management** — RAWG API key stored via `dotnet user-secrets` in development (never committed to source control); ready for environment variables or Azure Key Vault in production
+- **Input length constraints** — `[StringLength]` attributes on user input fields to prevent DoS via oversized payloads
+- **Async/await throughout** — no sync-over-async patterns that could starve the ASP.NET Core thread pool
+
 ## What I learned building this
 
 This is my first .NET project from scratch. Key takeaways:
@@ -80,8 +93,9 @@ This is my first .NET project from scratch. Key takeaways:
 
 ## Author
 
-Milan Keltoš 
-https://www.linkedin.com/in/milan-keltoš-7248123a9/
+**Milan Keltoš** 
+
+LinkedIn: [milan-keltoš](https://www.linkedin.com/in/milan-keltoš-7248123a9/)
 
 ---
 
