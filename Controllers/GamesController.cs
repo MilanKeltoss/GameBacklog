@@ -122,7 +122,7 @@ namespace GameBacklog.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes,CoverImageUrl,RawgId")] Game game)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Platform,Genre,Status,Rating,Notes,CoverImageUrl,RawgId")] Game game)
         {
             if (id != game.Id)
             {
@@ -139,7 +139,10 @@ namespace GameBacklog.Controllers
             }
 
             game.UserId = userId!;  // preserve the correct owner
+            game.DateAdded = existingGame.DateAdded;
             ModelState.Remove(nameof(Game.UserId));
+            ModelState.Remove(nameof(Game.DateAdded));
+
 
             if (ModelState.IsValid)
             {

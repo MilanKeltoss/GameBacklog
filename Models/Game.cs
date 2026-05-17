@@ -12,9 +12,11 @@ public class Game
     public string Title { get; set; } = string.Empty;
 
     [Required]
+    [StringLength(100)]
     [Display(Name = "Platform")]
     public string Platform { get; set; } = string.Empty;
 
+    [StringLength(100)]
     [Display(Name = "Genre")]
     public string? Genre { get; set; }
 
@@ -29,12 +31,14 @@ public class Game
     [Display(Name = "Date Added")]
     public DateTime DateAdded { get; set; } = DateTime.Now;
 
+    [StringLength(500)]
     [Display(Name = "Cover Image URL")]
     public string? CoverImageUrl { get; set; }
 
     [Display(Name = "RAWG ID")]
     public int? RawgId { get; set; }
 
+    [StringLength(2000)]
     [Display(Name = "Notes")]
     public string? Notes { get; set; }
 
