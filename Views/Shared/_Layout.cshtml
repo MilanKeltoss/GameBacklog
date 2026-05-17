@@ -73,7 +73,7 @@
         const toggle = document.getElementById('themeToggle');
         const icon = document.getElementById('themeIcon');
 
-        // Téma je už nastavená z head skriptu, len aktualizuj ikonu
+        // Theme already applied by head script, just update icon
         const currentTheme = html.getAttribute('data-bs-theme');
         icon.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
 

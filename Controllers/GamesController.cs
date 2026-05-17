@@ -2,7 +2,6 @@ using GameBacklog.Data;
 using GameBacklog.Models;
 using GameBacklog.Services;
 using GameBacklog.ViewModels;
-using GameBacklog.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +15,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace GameBacklog.Controllers
 {
+    [Authorize]
     public class GamesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -29,7 +29,6 @@ namespace GameBacklog.Controllers
             _userManager = userManager;
         }
 
-        // GET: Games
         // GET: Games
         public async Task<IActionResult> Index(string? searchString, GameStatus? statusFilter)
         {
@@ -60,9 +59,11 @@ namespace GameBacklog.Controllers
             {
                 return NotFound();
             }
+
             var userId = _userManager.GetUserId(User);
             var game = await _context.Games
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+
             if (game == null)
             {
                 return NotFound();
@@ -82,10 +83,10 @@ namespace GameBacklog.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,Platform,Genre,Status,Rating,DateAdded,Notes,CoverImageUrl,RawgId")] Game game)
+        public async Task<IActionResult> Create([Bind("Title,Platform,Genre,Status,Rating,DateAdded,Notes,CoverImageUrl,RawgId")] Game game)
         {
             game.UserId = _userManager.GetUserId(User)!;
-            ModelState.Remove(nameof(Game.UserId));  // odstránime z validácie, lebo sme ho práve nastavili
+            ModelState.Remove(nameof(Game.UserId));  // remove from validation since we just set it
 
             if (ModelState.IsValid)
             {
@@ -133,10 +134,10 @@ namespace GameBacklog.Controllers
 
             if (existingGame == null)
             {
-                return NotFound();  // neexistuje alebo nie je tvoja
+                return NotFound();  // doesn't exist or isn't yours
             }
 
-            game.UserId = userId!;  // zachováme správneho vlastníka
+            game.UserId = userId!;  // preserve the correct owner
             ModelState.Remove(nameof(Game.UserId));
 
             if (ModelState.IsValid)
@@ -169,9 +170,11 @@ namespace GameBacklog.Controllers
             {
                 return NotFound();
             }
+
             var userId = _userManager.GetUserId(User);
             var game = await _context.Games
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+
             if (game == null)
             {
                 return NotFound();
@@ -186,13 +189,15 @@ namespace GameBacklog.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var userId = _userManager.GetUserId(User);
-            var game = await _context.Games.FindAsync(id);
+            var game = await _context.Games
+                .FirstOrDefaultAsync(g => g.Id == id && g.UserId == userId);
+
             if (game != null)
             {
                 _context.Games.Remove(game);
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -234,7 +239,7 @@ namespace GameBacklog.Controllers
                                     .ToDictionary(g => g.Key, g => g.Count())
             };
 
-            // Ak nie sú žiadne hry s hodnotením, AverageRating je 0
+            // If there are no rated games, AverageRating is null
             if (!games.Any(g => g.Rating.HasValue))
             {
                 stats.AverageRating = null;

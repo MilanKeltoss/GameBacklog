@@ -92,35 +92,76 @@
             debounceTimer = setTimeout(() => searchRawg(query), 400);
         });
 
-        async function searchRawg(query) {
-            resultsDiv.innerHTML = '<div class="text-muted p-2">Searching...</div>';
+                async function searchRawg(query) {
+            resultsDiv.innerHTML = '';
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'text-muted p-2';
+            loadingMsg.textContent = 'Searching...';
+            resultsDiv.appendChild(loadingMsg);
 
             try {
                 const response = await fetch(`/Games/SearchRawg?query=${encodeURIComponent(query)}`);
                 const games = await response.json();
 
+                resultsDiv.innerHTML = '';  // clear loading
+
                 if (games.length === 0) {
-                    resultsDiv.innerHTML = '<div class="text-muted p-2">No games found.</div>';
+                    const noResults = document.createElement('div');
+                    noResults.className = 'text-muted p-2';
+                    noResults.textContent = 'No games found.';
+                    resultsDiv.appendChild(noResults);
                     return;
                 }
 
-                resultsDiv.innerHTML = games.map(g => `
-                    <button type="button" class="list-group-item list-group-item-action d-flex align-items-center"
-                            onclick='selectGame(${JSON.stringify(g)})'>
-                        ${g.coverImage
-                            ? `<img src="${g.coverImage}" style="width:60px; height:40px; object-fit:cover;" class="me-3 rounded" />`
-                            : `<div style="width:60px; height:40px;" class="me-3 bg-secondary rounded"></div>`}
-                        <div class="text-start">
-                            <strong>${g.name}</strong>
-                            <small class="text-muted d-block">
-                                ${g.released ? new Date(g.released).getFullYear() : '?'}
-                                ${g.genre ? '· ' + g.genre : ''}
-                            </small>
-                        </div>
-                    </button>
-                `).join('');
+                games.forEach(g => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'list-group-item list-group-item-action d-flex align-items-center';
+
+                    if (g.coverImage) {
+                        const img = document.createElement('img');
+                        img.src = g.coverImage;
+                        img.alt = '';
+                        img.className = 'me-3 rounded';
+                        img.style.width = '60px';
+                        img.style.height = '40px';
+                        img.style.objectFit = 'cover';
+                        btn.appendChild(img);
+                    } else {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'me-3 bg-secondary rounded';
+                        placeholder.style.width = '60px';
+                        placeholder.style.height = '40px';
+                        btn.appendChild(placeholder);
+                    }
+
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'text-start';
+
+                    const titleEl = document.createElement('strong');
+                    titleEl.textContent = g.name;
+                    textDiv.appendChild(titleEl);
+
+                    const metaEl = document.createElement('small');
+                    metaEl.className = 'text-muted d-block';
+                    const year = g.released ? new Date(g.released).getFullYear() : '?';
+                    const genrePart = g.genre ? ' · ' + g.genre : '';
+                    metaEl.textContent = year + genrePart;
+                    textDiv.appendChild(metaEl);
+
+                    btn.appendChild(textDiv);
+
+                    // Closure over g - no inline onclick with serialized payload
+                    btn.addEventListener('click', () => selectGame(g));
+
+                    resultsDiv.appendChild(btn);
+                });
             } catch (err) {
-                resultsDiv.innerHTML = '<div class="text-danger p-2">Search failed. Try again.</div>';
+                resultsDiv.innerHTML = '';
+                const errMsg = document.createElement('div');
+                errMsg.className = 'text-danger p-2';
+                errMsg.textContent = 'Search failed. Try again.';
+                resultsDiv.appendChild(errMsg);
                 console.error(err);
             }
         }
@@ -136,7 +177,14 @@
             setHiddenInput('RawgId', game.rawgId);
             setHiddenInput('CoverImageUrl', game.coverImage || '');
 
-            resultsDiv.innerHTML = `<div class="alert alert-success py-2 mb-0">✓ Selected: <strong>${game.name}</strong></div>`;
+                    resultsDiv.innerHTML = '';
+        const successAlert = document.createElement('div');
+        successAlert.className = 'alert alert-success py-2 mb-0';
+        successAlert.appendChild(document.createTextNode('✓ Selected: '));
+        const nameEl = document.createElement('strong');
+        nameEl.textContent = game.name;
+        successAlert.appendChild(nameEl);
+        resultsDiv.appendChild(successAlert);
             searchInput.value = '';
         }
 

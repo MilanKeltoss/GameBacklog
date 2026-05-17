@@ -17,7 +17,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false;  // pre vývoj, v produkcii true
+    options.SignIn.RequireConfirmedAccount = false;  // for development; true in production
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = false;
@@ -26,7 +26,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 })
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddRazorPages();  // Identity UI používa Razor Pages
+builder.Services.AddRazorPages();  // Identity UI uses Razor Pages
 
 var app = builder.Build();
 

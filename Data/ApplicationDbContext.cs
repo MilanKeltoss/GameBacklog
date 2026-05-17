@@ -15,13 +15,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        base.OnModelCreating(builder);  // dôležité! Identity tabuľky
+        base.OnModelCreating(builder);  // important! Identity tables
 
-        // Konfigurácia vzťahu Game -> User
+        // Configure Game -> User relationship
         builder.Entity<Game>()
             .HasOne(g => g.User)
             .WithMany(u => u.Games)
             .HasForeignKey(g => g.UserId)
-            .OnDelete(DeleteBehavior.Cascade);  // ak sa zmaže user, zmažu sa aj jeho hry
+            .OnDelete(DeleteBehavior.Cascade);  // if the user is deleted, their games are deleted too
     }
 }
