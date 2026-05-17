@@ -1,4 +1,4 @@
-using GameBacklog.Data;
+﻿using GameBacklog.Data;
 using GameBacklog.Models;
 using GameBacklog.Services;
 using GameBacklog.ViewModels;
@@ -33,7 +33,7 @@ namespace GameBacklog.Controllers
         public async Task<IActionResult> Index(string? searchString, GameStatus? statusFilter)
         {
             var userId = _userManager.GetUserId(User);
-            var games = _context.Games.Where(g => g.UserId == userId);
+            var games = _context.Games.AsNoTracking().Where(g => g.UserId == userId);
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -62,6 +62,7 @@ namespace GameBacklog.Controllers
 
             var userId = _userManager.GetUserId(User);
             var game = await _context.Games
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
             if (game == null)
@@ -149,7 +150,7 @@ namespace GameBacklog.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!GameExists(game.Id))
+                    if (!await GameExistsForUserAsync(game.Id))
                     {
                         return NotFound();
                     }
@@ -173,6 +174,7 @@ namespace GameBacklog.Controllers
 
             var userId = _userManager.GetUserId(User);
             var game = await _context.Games
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
             if (game == null)
@@ -201,49 +203,75 @@ namespace GameBacklog.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private bool GameExists(int id)
+        private async Task<bool> GameExistsForUserAsync(int id)
         {
-            return _context.Games.Any(e => e.Id == id);
+            var userId = _userManager.GetUserId(User);
+            return await _context.Games
+                .AsNoTracking()
+                .AnyAsync(e => e.Id == id && e.UserId == userId);
         }
 
         // GET: Games/Stats
         public async Task<IActionResult> Stats()
         {
             var userId = _userManager.GetUserId(User);
-            var games = await _context.Games.Where(g => g.UserId == userId).ToListAsync();
+            var query = _context.Games.AsNoTracking().Where(g => g.UserId == userId);
+
+            // Aggregated counts + average rating - single roundtrip
+            var basicStats = await query
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    Total = g.Count(),
+                    WantToPlay = g.Count(x => x.Status == GameStatus.WantToPlay),
+                    Playing = g.Count(x => x.Status == GameStatus.Playing),
+                    Completed = g.Count(x => x.Status == GameStatus.Completed),
+                    Dropped = g.Count(x => x.Status == GameStatus.Dropped),
+                    AvgRating = g.Where(x => x.Rating.HasValue).Average(x => (double?)x.Rating)
+                })
+                .FirstOrDefaultAsync();
+
+            // Top genre - separate query
+            var topGenre = await query
+                .Where(g => !string.IsNullOrEmpty(g.Genre))
+                .GroupBy(g => g.Genre!)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .FirstOrDefaultAsync();
+
+            // Top platform - separate query
+            var topPlatform = await query
+                .GroupBy(g => g.Platform)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .FirstOrDefaultAsync();
+
+            // Breakdown by platform - for table display
+            var gamesByPlatform = await query
+                .GroupBy(g => g.Platform)
+                .Select(g => new { Platform = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Platform, x => x.Count);
+
+            // Breakdown by genre
+            var gamesByGenre = await query
+                .Where(g => !string.IsNullOrEmpty(g.Genre))
+                .GroupBy(g => g.Genre!)
+                .Select(g => new { Genre = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Genre, x => x.Count);
 
             var stats = new StatsViewModel
             {
-                TotalGames = games.Count,
-                WantToPlayCount = games.Count(g => g.Status == GameStatus.WantToPlay),
-                PlayingCount = games.Count(g => g.Status == GameStatus.Playing),
-                CompletedCount = games.Count(g => g.Status == GameStatus.Completed),
-                DroppedCount = games.Count(g => g.Status == GameStatus.Dropped),
-                AverageRating = games.Where(g => g.Rating.HasValue)
-                                     .Select(g => (double)g.Rating!.Value)
-                                     .DefaultIfEmpty()
-                                     .Average(),
-                TopGenre = games.Where(g => !string.IsNullOrEmpty(g.Genre))
-                                .GroupBy(g => g.Genre!)
-                                .OrderByDescending(g => g.Count())
-                                .Select(g => g.Key)
-                                .FirstOrDefault(),
-                TopPlatform = games.GroupBy(g => g.Platform)
-                                   .OrderByDescending(g => g.Count())
-                                   .Select(g => g.Key)
-                                   .FirstOrDefault(),
-                GamesByPlatform = games.GroupBy(g => g.Platform)
-                                       .ToDictionary(g => g.Key, g => g.Count()),
-                GamesByGenre = games.Where(g => !string.IsNullOrEmpty(g.Genre))
-                                    .GroupBy(g => g.Genre!)
-                                    .ToDictionary(g => g.Key, g => g.Count())
+                TotalGames = basicStats?.Total ?? 0,
+                WantToPlayCount = basicStats?.WantToPlay ?? 0,
+                PlayingCount = basicStats?.Playing ?? 0,
+                CompletedCount = basicStats?.Completed ?? 0,
+                DroppedCount = basicStats?.Dropped ?? 0,
+                AverageRating = basicStats?.AvgRating,
+                TopGenre = topGenre,
+                TopPlatform = topPlatform,
+                GamesByPlatform = gamesByPlatform,
+                GamesByGenre = gamesByGenre
             };
-
-            // If there are no rated games, AverageRating is null
-            if (!games.Any(g => g.Rating.HasValue))
-            {
-                stats.AverageRating = null;
-            }
 
             return View(stats);
         }
